@@ -1,0 +1,60 @@
+{% extends "layout.html" %} {% block content %}
+<div class="card shadow-lg mb-5">
+  <div class="card-header bg-dark text-white py-3">
+    <h2 class="mb-0">
+      <i class="bi bi-easel2-fill"></i> Pembuat Sketch dari Webcam
+    </h2>
+  </div>
+  <div class="card-body p-4 text-center">
+    <p class="card-text mb-4 text-white-50">
+      Aktifkan webcam Anda dan lihat efek sketsa secara real-time! Pastikan Anda
+      mengizinkan browser untuk mengakses kamera.
+    </p>
+
+    <div
+      id="webcam-container"
+      class="mb-4"
+      style="
+        min-height: 480px;
+        background-color: #111827;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <!-- Video stream akan ditampilkan di sini oleh tag img yang di-refresh -->
+      <img
+        id="sketch-stream"
+        src="{{ url_for('video_feed_sketch') }}"
+        alt="Webcam Sketch Stream"
+        class="img-fluid rounded shadow"
+        style="max-width: 100%; height: auto; display: block; margin: 0 auto"
+      />
+    </div>
+    <small class="text-muted"
+      >Jika gambar tidak muncul, pastikan kamera terhubung dan browser memiliki
+      izin.</small
+    >
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  // Tidak ada JavaScript khusus yang dibutuhkan di sini untuk kasus dasar
+  // karena `<img>` src yang menunjuk ke endpoint stream Flask akan menangani refresh.
+  // Namun, Anda bisa menambahkan JS untuk kontrol (start/stop, pilih kamera, dll.)
+  // atau untuk menampilkan pesan error jika stream gagal dimuat.
+
+  // Contoh sederhana untuk deteksi error (opsional):
+  const sketchStreamImg = document.getElementById("sketch-stream");
+  if (sketchStreamImg) {
+    sketchStreamImg.onerror = function () {
+      const container = document.getElementById("webcam-container");
+      if (container) {
+        container.innerHTML =
+          '<p class="text-danger">Gagal memuat stream webcam. Pastikan kamera aktif dan diizinkan.</p>';
+      }
+    };
+  }
+</script>
+{% endblock %}

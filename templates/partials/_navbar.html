@@ -1,0 +1,50 @@
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="{{ url_for('index') }}">
+      <i class="bi bi-camera-reels-fill"></i> OpenCV Apps
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      data-bs-toggle="collapse"
+      data-bs-target="#navbarNav"
+      aria-controls="navbarNav"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.endpoint == 'index' %}active{% endif %}"
+            href="{{ url_for('index') }}"
+            ><i class="bi bi-house-door-fill"></i> Beranda</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.endpoint == 'foto_profil' %}active{% endif %}"
+            href="{{ url_for('foto_profil') }}"
+            ><i class="bi bi-person-bounding-box"></i> Foto Profil</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.endpoint == 'sketch_webcam' %}active{% endif %}"
+            href="{{ url_for('sketch_webcam') }}"
+            ><i class="bi bi-easel2-fill"></i> Sketch Webcam</a
+          >
+        </li>
+        <li class="nav-item">
+          <a
+            class="nav-link {% if request.endpoint == 'watermark' %}active{% endif %}"
+            href="{{ url_for('watermark') }}"
+            ><i class="bi bi-droplet-half"></i> Watermark</a
+          >
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,130 @@
+{% extends "layout.html" %} {% block content %}
+<div class="card shadow-lg mb-5">
+  <div class="card-header bg-dark text-white py-3">
+    <h2 class="mb-0">
+      <i class="bi bi-person-bounding-box"></i> Pembuat Foto Profil Otomatis
+    </h2>
+  </div>
+  <div class="card-body p-4">
+    <p class="card-text mb-4 text-white-50">
+      Upload gambar Anda, atur opsi, dan unduh foto profil yang sudah
+      dioptimalkan.
+    </p>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert">
+      <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data">
+      <div class="mb-4">
+        <label for="file" class="form-label fs-5">Upload Gambar Anda:</label>
+        <input
+          class="form-control form-control-lg"
+          type="file"
+          id="file"
+          name="file"
+          accept="image/png, image/jpeg, image/jpg"
+          required
+        />
+      </div>
+
+      <h4 class="mt-5 mb-3 text-light">Opsi Pemrosesan:</h4>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="target_width" class="form-label"
+            >Lebar Target (px):</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            id="target_width"
+            name="target_width"
+            value="500"
+            min="50"
+            max="2000"
+          />
+        </div>
+        <div class="col-md-6">
+          <label for="target_height" class="form-label"
+            >Tinggi Target (px):</label
+          >
+          <input
+            type="number"
+            class="form-control"
+            id="target_height"
+            name="target_height"
+            value="500"
+            min="50"
+            max="2000"
+          />
+        </div>
+      </div>
+
+      <div class="form-check form-switch mb-2 fs-5">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          id="grayscale"
+          name="grayscale"
+        />
+        <label class="form-check-label" for="grayscale"
+          >Konversi ke Grayscale</label
+        >
+      </div>
+
+      <div class="form-check form-switch mb-3 fs-5">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          role="switch"
+          id="blur"
+          name="blur"
+        />
+        <label class="form-check-label" for="blur">Tambahkan Efek Blur</label>
+      </div>
+      <div class="mb-4" id="blur_options" style="display: none">
+        <!-- Muncul jika blur aktif -->
+        <label for="blur_kernel" class="form-label"
+          >Ukuran Kernel Blur (ganjil, mis: 3, 5, 7):</label
+        >
+        <input
+          type="number"
+          class="form-control"
+          id="blur_kernel"
+          name="blur_kernel"
+          value="5"
+          min="3"
+          max="21"
+          step="2"
+        />
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">
+        <i class="bi bi-gear-fill"></i> Proses & Unduh Foto Profil
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  const blurCheckbox = document.getElementById("blur");
+  const blurOptionsDiv = document.getElementById("blur_options");
+
+  if (blurCheckbox) {
+    blurCheckbox.addEventListener("change", function () {
+      if (this.checked) {
+        blurOptionsDiv.style.display = "block";
+      } else {
+        blurOptionsDiv.style.display = "none";
+      }
+    });
+    // Inisialisasi saat load
+    if (blurCheckbox.checked) {
+      blurOptionsDiv.style.display = "block";
+    }
+  }
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% extends "layout.html" %} {% block content %}
+<div class="px-4 py-5 my-5 text-center">
+  <h1 class="display-4 fw-bold text-light">
+    <i class="bi bi-stars"></i> Selamat Datang di OpenCV Web Apps!
+  </h1>
+  <div class="col-lg-8 mx-auto">
+    <p class="lead mb-4 text-white-50">
+      Jelajahi berbagai alat pemrosesan gambar yang dibangun menggunakan OpenCV
+      dan Flask. Pilih salah satu fitur di bawah untuk memulai.
+    </p>
+    <div class="d-grid gap-3 d-sm-flex justify-content-sm-center">
+      <a
+        href="{{ url_for('foto_profil') }}"
+        class="btn btn-primary btn-lg px-4 gap-3"
+        ><i class="bi bi-person-square"></i> Buat Foto Profil</a
+      >
+      <a
+        href="{{ url_for('sketch_webcam') }}"
+        class="btn btn-outline-light btn-lg px-4"
+        ><i class="bi bi-camera-video-fill"></i> Efek Sketch Webcam</a
+      >
+      <a
+        href="{{ url_for('watermark') }}"
+        class="btn btn-outline-info btn-lg px-4"
+        ><i class="bi bi-patch-check-fill"></i> Tambah Watermark</a
+      >
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+  <div class="col d-flex align-items-start">
+    <div
+      class="icon-square text-bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 p-2 rounded"
+      style="background-color: #7f5af0 !important"
+    >
+      <i class="bi bi-crop text-white"></i>
+    </div>
+    <div>
+      <h3 class="fs-2 text-light">Foto Profil Otomatis</h3>
+      <p class="text-white-50">
+        Upload gambar, potong, ubah ukuran, dan tambahkan efek untuk foto profil
+        sempurna Anda.
+      </p>
+    </div>
+  </div>
+  <div class="col d-flex align-items-start">
+    <div
+      class="icon-square text-bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 p-2 rounded"
+      style="background-color: #7f5af0 !important"
+    >
+      <i class="bi bi-pencil-fill text-white"></i>
+    </div>
+    <div>
+      <h3 class="fs-2 text-light">Sketch dari Webcam</h3>
+      <p class="text-white-50">
+        Ubah feed webcam Anda menjadi efek sketsa artistik secara real-time.
+      </p>
+    </div>
+  </div>
+  <div class="col d-flex align-items-start">
+    <div
+      class="icon-square text-bg-light d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3 p-2 rounded"
+      style="background-color: #7f5af0 !important"
+    >
+      <i class="bi bi-shield-check text-white"></i>
+    </div>
+    <div>
+      <h3 class="fs-2 text-light">Watermark Gambar</h3>
+      <p class="text-white-50">
+        Tambahkan logo atau teks watermark ke gambar Anda dengan mudah.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
