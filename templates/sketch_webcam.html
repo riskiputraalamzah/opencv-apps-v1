@@ -7,8 +7,7 @@
   </div>
   <div class="card-body p-4 text-center">
     <p class="card-text mb-4 text-white-50">
-      Aktifkan webcam Anda dan lihat efek sketsa secara real-time! Pastikan Anda
-      mengizinkan browser untuk mengakses kamera.
+      Aktifkan webcam Anda dan lihat efek sketsa secara real-time!
     </p>
 
     <div
@@ -16,45 +15,217 @@
       class="mb-4"
       style="
         min-height: 480px;
-        background-color: #111827;
+        background-color: #212529;
         border-radius: 10px;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
+        position: relative;
+        overflow: hidden;
       "
     >
-      <!-- Video stream akan ditampilkan di sini oleh tag img yang di-refresh -->
+      <video
+        id="webcam-input"
+        autoplay
+        playsinline
+        muted
+        style="display: none; width: 640px; height: 480px"
+      ></video>
+      <canvas id="snapshot-canvas" style="display: none"></canvas>
+
       <img
-        id="sketch-stream"
-        src="{{ url_for('video_feed_sketch') }}"
+        src="{{ url_for('static', filename='images/images-empty.png') }}"
+        id="sketch-output"
         alt="Webcam Sketch Stream"
         class="img-fluid rounded shadow"
-        style="max-width: 100%; height: auto; display: block; margin: 0 auto"
+        style="
+          max-width: 100%;
+          max-height: 480px;
+          height: auto;
+          display: block;
+          margin: 0 auto;
+          background-color: #ffffff;
+        "
       />
+      <p id="status-message" class="text-white-50 mt-2"></p>
     </div>
-    <small class="text-muted"
-      >Jika gambar tidak muncul, pastikan kamera terhubung dan browser memiliki
-      izin.</small
+    <div class="mb-3">
+      <button id="start-webcam" class="btn btn-lg btn-success me-2">
+        <i class="bi bi-camera-video-fill"></i> Mulai Webcam
+      </button>
+      <button
+        id="stop-webcam"
+        class="btn btn-lg btn-danger"
+        style="display: none"
+      >
+        <i class="bi bi-stop-circle-fill"></i> Stop Webcam
+      </button>
+    </div>
+    <small class="text-muted d-block"
+      >Pastikan browser memiliki izin untuk mengakses kamera.</small
     >
   </div>
 </div>
 {% endblock %} {% block scripts %}
 <script>
-  // Tidak ada JavaScript khusus yang dibutuhkan di sini untuk kasus dasar
-  // karena `<img>` src yang menunjuk ke endpoint stream Flask akan menangani refresh.
-  // Namun, Anda bisa menambahkan JS untuk kontrol (start/stop, pilih kamera, dll.)
-  // atau untuk menampilkan pesan error jika stream gagal dimuat.
+  const videoElement = document.getElementById("webcam-input");
+  const sketchOutputImg = document.getElementById("sketch-output");
+  const startButton = document.getElementById("start-webcam");
+  const stopButton = document.getElementById("stop-webcam");
+  const statusMessage = document.getElementById("status-message");
 
-  // Contoh sederhana untuk deteksi error (opsional):
-  const sketchStreamImg = document.getElementById("sketch-stream");
-  if (sketchStreamImg) {
-    sketchStreamImg.onerror = function () {
-      const container = document.getElementById("webcam-container");
-      if (container) {
-        container.innerHTML =
-          '<p class="text-danger">Gagal memuat stream webcam. Pastikan kamera aktif dan diizinkan.</p>';
+  let stream = null;
+  let intervalId = null;
+  const frameRate = 10;
+  const videoWidth = 640;
+  const videoHeight = 480;
+  const sketchApiUrl = "{{ url_for('api_process_sketch_frame') }}";
+  const canvasElement = document.createElement("canvas");
+  const placeholderImageUrl =
+    "{{ url_for('static', filename='images/images-empty.png') }}"; // Simpan URL placeholder
+
+  async function processAndSendFrame() {
+    if (
+      videoElement.srcObject &&
+      videoElement.readyState >= 2 &&
+      videoElement.videoWidth > 0
+    ) {
+      canvasElement.width = videoElement.videoWidth;
+      canvasElement.height = videoElement.videoHeight;
+      const context = canvasElement.getContext("2d");
+      context.drawImage(
+        videoElement,
+        0,
+        0,
+        canvasElement.width,
+        canvasElement.height
+      );
+      const imageDataUrl = canvasElement.toDataURL("image/jpeg", 0.7);
+
+      try {
+        const response = await fetch(sketchApiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_data_url: imageDataUrl }),
+        });
+
+        if (!response.ok) {
+          statusMessage.textContent = `Server Error: ${response.status}`;
+          console.error(
+            "CLIENT: Server error:",
+            response.status,
+            await response.text()
+          );
+          sketchOutputImg.src = placeholderImageUrl; // Kembali ke placeholder jika server error
+          return;
+        }
+
+        const result = await response.json();
+        if (result && result.sketch_image_data_url) {
+          sketchOutputImg.src = result.sketch_image_data_url;
+          if (!statusMessage.textContent.includes("Streaming...")) {
+            statusMessage.textContent = "Streaming...";
+          }
+        } else if (result && result.error) {
+          statusMessage.textContent = `Processing Error: ${result.error}`;
+          console.error("CLIENT: Processing error from server:", result.error);
+          sketchOutputImg.src = placeholderImageUrl; // Kembali ke placeholder jika processing error
+        } else {
+          statusMessage.textContent = "Format respons server tidak dikenali.";
+          console.warn(
+            "CLIENT: Respons server tidak memiliki data URL atau error field yang diharapkan:",
+            result
+          );
+          sketchOutputImg.src = placeholderImageUrl; // Kembali ke placeholder jika format aneh
+        }
+      } catch (error) {
+        statusMessage.textContent = "Error koneksi/JS. Cek console.";
+        console.error("CLIENT: Fetch/JSON parse error:", error);
+        sketchOutputImg.src = placeholderImageUrl; // Kembali ke placeholder jika network error
+        if (intervalId) stopWebcam(); // Hentikan stream jika ada error parah
       }
-    };
+    }
   }
+
+  async function startWebcam() {
+    try {
+      statusMessage.textContent = "Mengakses kamera...";
+      startButton.disabled = true;
+      stopButton.disabled = true;
+      // Set ke placeholder dulu sebelum stream dimulai, untuk menghindari gambar lama
+      sketchOutputImg.src = placeholderImageUrl;
+      const constraints = {
+        video: { width: videoWidth, height: videoHeight, facingMode: "user" },
+        audio: false,
+      };
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+      videoElement.srcObject = stream;
+      sketchOutputImg.style.display = "block";
+
+      videoElement.onplaying = () => {
+        if (videoElement.videoWidth === 0) {
+          statusMessage.textContent = "Error: Dimensi video masih 0.";
+          stopWebcam();
+          return;
+        }
+        statusMessage.textContent = "Kamera aktif. Memulai stream...";
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(processAndSendFrame, 1000 / frameRate);
+        startButton.style.display = "none";
+        stopButton.style.display = "inline-block";
+        startButton.disabled = false;
+        stopButton.disabled = false;
+      };
+      videoElement.onerror = (e) => {
+        statusMessage.textContent = "Error pada elemen video input.";
+        stopWebcam();
+      };
+      videoElement
+        .play()
+        .catch((e) => console.warn("CLIENT: video.play() ditolak:", e));
+    } catch (err) {
+      let userMessage = `Gagal akses kamera: ${err.name}.`;
+      if (err.name === "NotFoundError") userMessage = "Kamera tidak ditemukan.";
+      else if (err.name === "NotAllowedError")
+        userMessage = "Akses kamera tidak diizinkan.";
+      statusMessage.textContent = userMessage;
+      console.error("CLIENT: Error getUserMedia:", err);
+      startButton.style.display = "inline-block";
+      stopButton.style.display = "none";
+      startButton.disabled = false;
+      stopButton.disabled = true;
+      sketchOutputImg.src = placeholderImageUrl; // Pastikan kembali ke placeholder jika gagal start
+    }
+  }
+
+  function stopWebcam() {
+    statusMessage.textContent = "Stream dihentikan.";
+    if (stream) {
+      stream.getTracks().forEach((track) => track.stop());
+      stream = null;
+    }
+    if (intervalId) {
+      clearInterval(intervalId);
+      intervalId = null;
+    }
+    videoElement.srcObject = null;
+    sketchOutputImg.src = placeholderImageUrl; // Set ke gambar placeholder saat dihentikan
+    startButton.style.display = "inline-block";
+    stopButton.style.display = "none";
+    startButton.disabled = false;
+    stopButton.disabled = true;
+  }
+
+  // Inisialisasi awal
+  startButton.addEventListener("click", startWebcam);
+  stopButton.addEventListener("click", stopWebcam);
+  window.addEventListener("beforeunload", () => {
+    if (stream) stopWebcam();
+  });
+  statusMessage.textContent = 'Klik "Mulai Webcam" untuk memulai.';
+  // src sudah di-set di HTML, alt untuk aksesibilitas
+  sketchOutputImg.alt = "Webcam Sketch Stream Area";
+  stopButton.disabled = true;
 </script>
 {% endblock %}
