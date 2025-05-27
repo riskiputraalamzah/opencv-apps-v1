@@ -1,0 +1,10 @@
+#sketch-output {
+  aspect-ratio: 16/9;
+  object-fit: cover;
+}
+
+@media (max-width: 569px) {
+  #sketch-output {
+    aspect-ratio: 4/3;
+  }
+}
